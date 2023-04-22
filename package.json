@@ -1,0 +1,21 @@
+{
+  "name": "juegoback",
+  "version": "1.0.0",
+  "description": "backend de parchis con preguntas",
+  "main": "index.js",
+  "scripts": {
+    "start": "node .",
+    "dev": "nodemon .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Eric Aguilar",
+  "license": "ISC",
+  "dependencies": {
+    "apollo-server": "^3.12.0",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.0.3",
+    "graphql": "^16.6.0",
+    "jsonwebtoken": "^9.0.0",
+    "mongoose": "^7.0.4"
+  }
+}
