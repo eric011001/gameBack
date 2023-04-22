@@ -168,13 +168,26 @@ const resolvers = {
         updateMyPosition: async(_,{input}, ctx) => {
             try {
                 const {name, id} = ctx;
+
+
+                
                 let existGamer = await Gamer.findById(id);
                 if(!existGamer){
                     throw new Error('El jugador no existe')
                 }
 
+                if(input.position > 12 || input.position< 0) {
+                    throw new Error('No puedes avanzar ese numero de casillas')
+                }
+
                 const index = existGamer.pieces.findIndex(p => p.number === input.number);
-                existGamer.pieces[index] = input;
+                const newPosition = {
+                    number: input.number,
+                    position: existGamer.pieces[index].position + input.position
+                }
+                existGamer.pieces[index] = newPosition;
+
+                
 
                 const newGamer = await Gamer.findByIdAndUpdate({_id: id}, existGamer, {new: true});
                 return 'piezas actualizadas';
@@ -320,9 +333,10 @@ const resolvers = {
                 throw new Error(error);
             }
         },
-        updateNextGamer: async(_,{id}, ctx) => {
+        updateNextGamer: async(_,{}, ctx) => {
             try {
-                const existGame = await General.findById(id);
+                const existGame = await General.findOne({active: true});
+                //const existGame = await General.findById(id);
                 if(!existGame){
                     throw new Error('El juego no existe');
 
@@ -338,8 +352,8 @@ const resolvers = {
                         tempindex = index+1 == existGame.gamers.length ? 0 : index+1;
                     }
                 });
-                const newGeneral= General.findByIdAndUpdate({_id: id}, {activeGamer: existGame.gamers[tempindex].id.toString()}, {new: true})
-                return newGeneral;
+                const newGeneral= await General.findByIdAndUpdate({_id: existGame._id}, {activeGamer: existGame.gamers[tempindex].id.toString()}, {new: true})
+                return 'Siguiente jugador';
             } catch (error) {
                 throw new Error(error);
             }

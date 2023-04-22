@@ -118,7 +118,7 @@ const typeDefs = gql`
         addGamer(input: AddGamerInput): General
         startGame(id: ID!): General
         stopGame(id: ID!, winner: ID!): General
-        updateNextGamer(id: ID!): General
+        updateNextGamer: String
     }
 `;
 
