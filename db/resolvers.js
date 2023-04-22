@@ -118,6 +118,7 @@ const resolvers = {
             const newGamer = new Gamer(newModelGamer);
             newGamer.save();
             return{
+                id: newGamer._id,
                 token: crearTokenUsuario(newGamer,process.env.SECRETA,'28D')
             }
         },
