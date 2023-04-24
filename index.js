@@ -23,10 +23,10 @@ const server = new ApolloServer({
             }
         }
     },
-    cors: {
+    /*cors: {
         origin: ['http://localhost:3000', 'https://parchis-app.onrender.com'],
         credentials: true
-    },
+    },*/
 });
 
 
