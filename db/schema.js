@@ -98,6 +98,8 @@ const typeDefs = gql`
         getGenerals: [General]
         getGeneral(id:ID!): General
         getActiveGeneral: General
+
+        getActiveGeneralGamers: [Gamer]
     }
 
 
@@ -117,8 +119,10 @@ const typeDefs = gql`
         deleteGeneral(id: ID!): String
         addGamer(input: AddGamerInput): General
         startGame(id: ID!): General
-        stopGame(id: ID!, winner: ID!): General
+        stopGame(id: ID!): General
         updateNextGamer: String
+
+        addActiveWinner(id:ID!): String
     }
 `;
 

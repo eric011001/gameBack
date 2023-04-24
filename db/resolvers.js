@@ -7,6 +7,21 @@ const Gamer = require("../models/Gamer");
 const General = require('../models/General');
 const Question = require("../models/Question");
 
+const blocks = [
+    1,
+    3,
+    8,
+    14,
+    16,
+    21,
+    27,
+    29,
+    34,
+    40,
+    42,
+    47,
+]
+
 const crearTokenUsuario = (usuario, secreta, expiresIn) => {
     const {id, name} = usuario;
     return jwt.sign({id,name},secreta, { expiresIn } );
@@ -18,10 +33,9 @@ const resolvers = {
         getGamers: async(_,{},ctx) => {
             try {
                 const gamers = await Gamer.find({});
-                gamers.forEach(element => {
-                    console.log(element.name);
+                /*gamers.forEach(element => {
                     console.log(crearTokenUsuario(element,process.env.SECRETA,'28D'));
-                });
+                });*/
                 return gamers
             } catch (error) {
                 throw new Error(error)
@@ -82,7 +96,7 @@ const resolvers = {
         getGenerals: async(_, {}, ctx) => {
             try {
                 const generals = await General.find({}).populate('activeGamer');
-                console.log(generals);
+                //console.log(generals);
                 return generals
             } catch (error) {
                 throw new Error(error);
@@ -91,8 +105,19 @@ const resolvers = {
         getActiveGeneral: async(_, {}, ctx) => {
             try {
                 const newgeneral = await General.findOne({active: true}).populate('activeGamer');
-                console.log(newgeneral);
+                //console.log(newgeneral);
                 return newgeneral
+            } catch (error) {
+                throw new Error(error);
+            }
+        },
+        getActiveGeneralGamers: async(_,{},ctx) => {
+            try {
+                const activeGame = await General.findOne({active: true});
+                const gamersIds = activeGame.gamers.map(obj => (obj.id.toString() ));
+                //console.log(gamersIds);
+                const Gamers = await Gamer.find({ _id: { $in: gamersIds }});
+                return Gamers;
             } catch (error) {
                 throw new Error(error);
             }
@@ -156,26 +181,6 @@ const resolvers = {
                     throw new Error('El jugador no existe')
                 }
 
-                const index = existGamer.pieces.findIndex(p => p.number === input.number);
-                existGamer.pieces[index] = input;
-
-                const newGamer = await Gamer.findByIdAndUpdate({_id: id}, existGamer, {new: true});
-                return 'piezas actualizadas';
-            } catch (error) {
-                throw new Error(error);
-            }
-        },
-        updateMyPosition: async(_,{input}, ctx) => {
-            try {
-                const {name, id} = ctx;
-
-
-                
-                let existGamer = await Gamer.findById(id);
-                if(!existGamer){
-                    throw new Error('El jugador no existe')
-                }
-
                 if(input.position > 12 || input.position< 0) {
                     throw new Error('No puedes avanzar ese numero de casillas')
                 }
@@ -188,6 +193,119 @@ const resolvers = {
                 existGamer.pieces[index] = newPosition;
 
                 
+
+                const newGamer = await Gamer.findByIdAndUpdate({_id: id}, existGamer, {new: true});
+                return 'piezas actualizadas';
+            } catch (error) {
+                throw new Error(error);
+            }
+        },
+        updateMyPosition: async(_,{input}, ctx) => {
+            //console.log(ctx.name);
+            try {
+                const {name, id} = ctx;
+                let indexUser = 0;
+
+                
+                let existGamer = await Gamer.findById(id);
+                if(!existGamer){
+                    throw new Error('El jugador no existe')
+                }
+
+                if(input.position > 12 ) {
+                    throw new Error('No puedes avanzar ese numero de casillas')
+                }
+
+                const index = existGamer.pieces.findIndex(p => p.number === input.number);
+                const newPosition = {
+                    number: input.number,
+                    position: existGamer.pieces[index].position + input.position
+                }
+                const lastNumber = existGamer.pieces[index].position;
+                const newnumber = existGamer.pieces[index].position + input.position;
+                existGamer.pieces[index] = newPosition;
+                console.log(existGamer);
+                const activeGame = await General.findOne({active: true});
+                const gamersIds = activeGame.gamers.map(obj => (obj.id.toString() ));
+                const gamers = await Gamer.find({ _id: { $in: gamersIds }});
+
+
+                let positions = [];
+                gamers.forEach((element, index) => {
+                    if(id == element.id){
+                        indexUser = index;
+                    }
+                    element.pieces.forEach(piece => {
+                        let tempPosition;
+                        switch (index) {
+                            case 0:
+                                if(piece.position == 0){
+                                    tempPosition = piece.number == 1 ? 200 : 201
+                                }else{
+                                    tempPosition = piece.position
+                                }
+                                break;
+                            case 1:
+                                if(piece.position == 0){
+                                    tempPosition = piece.number == 1 ? 202 : 203
+                                }else{
+                                    tempPosition = piece.position+27 > 52
+                                }
+                                break
+                            case 2:
+                                if(piece.position == 0){
+                                    tempPosition = piece.number == 1 ? 204 : 205
+                                }else{
+                                    tempPosition = piece.position+42
+                                }
+                                break
+                            case 3:
+                                if(piece.position == 0){
+                                    tempPosition = piece.number == 1 ? 206 : 207
+                                }else{
+                                    tempPosition = piece.position+14
+                                }
+                                break
+                            default:
+                                break;
+                        }
+                        positions.push({
+                            user: index,
+                            piece: piece.number,
+                            position: tempPosition
+                        })
+                    }) 
+                });
+                console.log(positions);
+                const samePositions = await positions.filter(position => position.position ==newPosition.position)
+                const filteredArr = positions.filter((el, index, self) => {
+                    return (el.position >= lastNumber && el.position <= newnumber) && self.findIndex((elem) => elem.position === el.position) !== index;
+                });
+                if (filteredArr.length >= 2){
+                    throw new Error('hay un bloqueo en tu camino')
+                }
+
+                if(samePositions.length > 0 && !blocks.includes(newPosition.position)){
+
+                    let loser = gamers[samePositions[0].user];
+
+                        const index = loser.pieces.findIndex(p => p.number === samePositions[0].piece);
+                        const newPosition = {
+                            number: samePositions[0].piece,
+                            position: 0
+                        }
+                        loser.pieces[index] = newPosition;
+                        console.log(loser.id.toString());
+                        console.log(loser.pieces);
+                        const newLoser = await Gamer.findByIdAndUpdate({_id: loser.id.toString()},{pieces: loser.pieces},{new: true});
+                        console.log(newLoser);
+                        const newNewPosition = {
+                            number: input.number,
+                            position: existGamer.pieces[index].position + 10
+                        }
+                        existGamer.pieces[index] = newNewPosition;
+                        console.log(existGamer);
+                }
 
                 const newGamer = await Gamer.findByIdAndUpdate({_id: id}, existGamer, {new: true});
                 return 'piezas actualizadas';
@@ -268,7 +386,6 @@ const resolvers = {
                 const newGamers = [...general.gamers, newExistGamer];
 
                 general.gamers = newGamers;
-                console.log(general);
 
                 const newGeneral = await General.findByIdAndUpdate({_id: game}, general, {new: true});
                 return newGeneral;
@@ -320,14 +437,14 @@ const resolvers = {
                 throw new Error(error)
             }
         },
-        stopGame: async(_,{id, winner}, ctx) => {
+        stopGame: async(_,{id}, ctx) => {
             try {
                 const existGame = await General.findById(id);
                 if(!existGame){
                     throw new Error('El juego no existe');
 
                 }
-                const newGame = await General.findByIdAndUpdate({_id: id}, {active:false, winner: winner}, {new: true});
+                const newGame = await General.findByIdAndUpdate({_id: id}, {active:false}, {new: true});
                 return newGame
             } catch (error) {
                 throw new Error(error);
@@ -341,14 +458,11 @@ const resolvers = {
                     throw new Error('El juego no existe');
 
                 }
-                console.log(existGame);
                 const activeGamer = existGame.activeGamer.toString();
                 let tempindex = 0;
                 existGame.gamers.forEach((item, index) => {
                     if(item.id.toString() === activeGamer){
-                        console.log(item);
-                        console.log(index);
-                        console.log(existGame.gamers.length);
+                       
                         tempindex = index+1 == existGame.gamers.length ? 0 : index+1;
                     }
                 });
@@ -357,7 +471,22 @@ const resolvers = {
             } catch (error) {
                 throw new Error(error);
             }
-        }
+        },
+        addActiveWinner: async(_,{id}, ctx) => {
+            try {
+                const existGamer = await Gamer.findById(id);
+
+                if(!existGamer){
+                    throw new Error('El jugador no existe');
+                }
+
+                const activeGeneralWinner = General.findOneAndUpdate({active:true},{winner: id},{new:true});
+                return `${existGamer.name} ha ganado`;
+            } catch (error) {
+                throw new Error(error);
+            }
+        },
+        
     }
 }
 
