@@ -2,7 +2,7 @@ const { ApolloServer} = require('apollo-server');
 const typeDefs = require('./db/schema');
 const resolvers = require('./db/resolvers');
 const conectarDB = require('./config/db');
-const cors = require('cors');
+//const cors = require('cors');
 const jwt = require('jsonwebtoken');
 conectarDB();
 
@@ -23,17 +23,13 @@ const server = new ApolloServer({
             }
         }
     },
-    /*cors: {
+    cors: {
         origin: ['http://localhost:3000', 'https://parchis-app.onrender.com'],
         credentials: true
-    },*/
+    },
 });
 
-server.applyMiddleware({cors: {
-    origin: '*',
-    methods: 'GET,POST',
-    allowedHeaders: 'Content-Type, Authorization',
-  }});
+
 
 /*eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYwZjIwZDQ4Nzg0YWM5MDQxN2M3NjBiOSIsIm5vbWJyZSI6IkVyaWMiLCJhcGVsbGlkb3MiOiJBZ3VpbGFyIE1hcmNpYWwiLCJlbWFpbCI6ImVyaWMuYWd1aW1hckBnbWFpbC5jb20iLCJzdGF0dXMiOiJBQ1RJVk8iLCJyb2wiOiJBRE1JTklTVFJBRE9SIiwiaWF0IjoxNjI2NDgxMzQwLCJleHAiOjE2Mjg5MDA1NDB9.EBbHEA3Je5I-T8kTbJGA05NsZuCh8WO7lkj_Ub8AVAE */
 server.listen().then( ({url}) => {

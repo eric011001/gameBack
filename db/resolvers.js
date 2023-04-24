@@ -33,9 +33,10 @@ const resolvers = {
         getGamers: async(_,{},ctx) => {
             try {
                 const gamers = await Gamer.find({});
-                /*gamers.forEach(element => {
+                gamers.forEach(element => {
+                    console.log(element.name);
                     console.log(crearTokenUsuario(element,process.env.SECRETA,'28D'));
-                });*/
+                });
                 return gamers
             } catch (error) {
                 throw new Error(error)
