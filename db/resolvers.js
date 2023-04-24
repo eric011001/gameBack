@@ -224,7 +224,7 @@ const resolvers = {
                 const lastNumber = existGamer.pieces[index].position;
                 const newnumber = existGamer.pieces[index].position + input.position;
                 existGamer.pieces[index] = newPosition;
-                console.log(existGamer);
+
                 const activeGame = await General.findOne({active: true});
                 const gamersIds = activeGame.gamers.map(obj => (obj.id.toString() ));
                 const gamers = await Gamer.find({ _id: { $in: gamersIds }});
@@ -249,21 +249,21 @@ const resolvers = {
                                 if(piece.position == 0){
                                     tempPosition = piece.number == 1 ? 202 : 203
                                 }else{
-                                    tempPosition = piece.position+27 > 52
+                                    tempPosition = piece.position > 52 ? piece.position+58 : piece.position+27 > 52 ? piece.position+27-52 : piece.position+27
                                 }
                                 break
                             case 2:
                                 if(piece.position == 0){
                                     tempPosition = piece.number == 1 ? 204 : 205
                                 }else{
-                                    tempPosition = piece.position+42
+                                    tempPosition = piece.position > 52 ? piece.position +64 : piece.position+42 > 52 ? piece.position+42-52 : piece.position+42
                                 }
                                 break
                             case 3:
                                 if(piece.position == 0){
                                     tempPosition = piece.number == 1 ? 206 : 207
                                 }else{
-                                    tempPosition = piece.position+14
+                                    tempPosition = piece.position > 52 ? piece.position+70 : piece.position+14 > 52 ? piece.position+14-52 : piece.position+14
                                 }
                                 break
                             default:
@@ -306,7 +306,10 @@ const resolvers = {
                         existGamer.pieces[index] = newNewPosition;
                         console.log(existGamer);
                 }
-
+                //57
+                if(newPosition.position > 57){
+                    const newGen = await General.findOneAndUpdate({active: true}, {winner: id}, {new: true})
+                }
                 const newGamer = await Gamer.findByIdAndUpdate({_id: id}, existGamer, {new: true});
                 return 'piezas actualizadas';
             } catch (error) {
