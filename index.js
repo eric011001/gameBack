@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 conectarDB();
 
 const server = new ApolloServer({
+    cors:false,
     typeDefs,
     resolvers,
     context: ({req}) => {
