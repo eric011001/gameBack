@@ -35,10 +35,10 @@ const resolvers = {
                 const gamers = await Gamer.find({});
                 const preguntas = await Question.find({}).count();
                 console.log(preguntas);
-                /*gamers.forEach(element => {
+                gamers.forEach(element => {
                     console.log(element.name);
                     console.log(crearTokenUsuario(element,process.env.SECRETA,'28D'));
-                });*/
+                });
                 return gamers
             } catch (error) {
                 throw new Error(error)
@@ -72,7 +72,7 @@ const resolvers = {
             try {
                 const random = Math.floor(Math.random() * 54);
 
-
+                //console.log(random);
                 const question = await Question.findOne().skip(random);
 
                 return question;
@@ -89,6 +89,8 @@ const resolvers = {
                 }
                 
                 if(existQuestion.correctAnswer == answer){
+                    const gamer = Gamer.findById(ctx.id);
+                    await Gamer.findByIdAndUpdate({_id: ctx.id}, {hits:gamer.hits+1},{new:true})
                     return true
                 }
                 return false;
@@ -204,6 +206,7 @@ const resolvers = {
             }
         },
         updateMyPosition: async(_,{input}, ctx) => {
+            //no se come a las fichas
             
             //console.log(ctx.name);
             try {
@@ -219,6 +222,8 @@ const resolvers = {
                 if(input.position > 12 ) {
                     throw new Error('No puedes avanzar ese numero de casillas')
                 }
+
+
 
                 const index = existGamer.pieces.findIndex(p => p.number === input.number);
                 const newPosition = {
@@ -237,14 +242,15 @@ const resolvers = {
                 if(newPosition.position > 58){
                     throw new Error('No puedes mover más esta ficha')
                 }
-
+                let myNewPosition = {};
                 let positions = [];
-                gamers.forEach((element, index) => {
+                await gamers.forEach(async (element, index) => {
                     if(id == element.id){
                         indexUser = index;
                     }
-                    element.pieces.forEach(piece => {
+                    await element.pieces.forEach(piece => {
                         let tempPosition;
+                        
                         switch (index) {
                             case 0:
                                 if(piece.position == 0){
@@ -264,18 +270,25 @@ const resolvers = {
                                 if(piece.position == 0){
                                     tempPosition = piece.number == 1 ? 204 : 205
                                 }else{
-                                    tempPosition = piece.position > 52 ? piece.position +12 : piece.position+42 > 52 ? piece.position+42-52 : piece.position+42
+                                    tempPosition = piece.position > 52 ? piece.position +12 : piece.position+39 > 52 ? piece.position+39-52 : piece.position+39
                                 }
                                 break
                             case 3:
                                 if(piece.position == 0){
                                     tempPosition = piece.number == 1 ? 206 : 207
                                 }else{
-                                    tempPosition = piece.position > 52 ? piece.position+18 : piece.position+14 > 52 ? piece.position+14-52 : piece.position+14
+                                    tempPosition = piece.position > 52 ? piece.position+18 : piece.position+12 > 52 ? piece.position+14-52 : piece.position+14
                                 }
                                 break
                             default:
                                 break;
+                        }
+                        if(element.id === id && piece.number == input.number){
+                            myNewPosition = {
+                            
+                                piece: piece.number,
+                                position: tempPosition
+                            }
                         }
                         positions.push({
                             user: index,
@@ -284,34 +297,35 @@ const resolvers = {
                         })
                     }) 
                 });
-                const samePositions = await positions.filter(position => position.position ==newPosition.position)
+                console.log(positions);
+                console.log(myNewPosition);
+                const samePositions = await positions.filter(position => position.position == myNewPosition.position && position.user !== indexUser)
+                console.log(samePositions);
                 const filteredArr = positions.filter((el, index, self) => {
                     return (el.position >= lastNumber && el.position <= newnumber) && self.findIndex((elem) => elem.position === el.position) !== index;
                 });
                 if (filteredArr.length >= 2){
                     throw new Error('hay un bloqueo en tu camino')
                 }
-
-                if(samePositions.length > 0 && !blocks.includes(newPosition.position)){
+                if(samePositions.length > 0 && !blocks.includes(newPosition.position) && samePositions[0].user !== indexUser){
 
                     let loser = gamers[samePositions[0].user];
 
                         const index = loser.pieces.findIndex(p => p.number === samePositions[0].piece);
-                        const newPosition = {
+                        const newPositionLoser = {
                             number: samePositions[0].piece,
                             position: 0
                         }
-                        loser.pieces[index] = newPosition;
-                        console.log(loser.id.toString());
-                        console.log(loser.pieces);
+                        loser.pieces[index] = newPositionLoser;
+                        
                         const newLoser = await Gamer.findByIdAndUpdate({_id: loser.id.toString()},{pieces: loser.pieces},{new: true});
-                        console.log(newLoser);
+
                         const newNewPosition = {
                             number: input.number,
                             position: existGamer.pieces[index].position + 10
                         }
                         existGamer.pieces[index] = newNewPosition;
-                        console.log(existGamer);
+
                 }
                 //57
                 if(existGamer.pieces[0].position >= 58 && existGamer.pieces[1].position>=58){
@@ -496,6 +510,20 @@ const resolvers = {
                 throw new Error(error);
             }
         },
+        deleteAllGamers: async(_,{}, ctx) => {
+            const gamers = await Gamer.find({});
+
+            gamers.forEach(async gamer => {
+                await Gamer.findByIdAndDelete(gamer.id.toString());
+            })
+        },
+        deleteAllGenerals: async(_,{},ctx) => {
+            const generals = await General.find({});
+
+            generals.forEach(async general => {
+                await General.findByIdAndDelete(general.id.toString())
+            })
+        }
         
     }
 }

@@ -123,6 +123,9 @@ const typeDefs = gql`
         updateNextGamer: String
 
         addActiveWinner(id:ID!): String
+
+        deleteAllGamers:String
+        deleteAllGenerals:String
     }
 `;
 
