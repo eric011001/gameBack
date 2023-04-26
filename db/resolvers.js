@@ -90,7 +90,7 @@ const resolvers = {
                 
                 if(existQuestion.correctAnswer == answer){
                     const gamer = Gamer.findById(ctx.id);
-                    await Gamer.findByIdAndUpdate({_id: ctx.id}, {hits:gamer.hits+1},{new:true})
+                    
                     return true
                 }
                 return false;
